@@ -3,17 +3,17 @@ package com.cesarla.http
 import java.time.Instant
 import java.util.concurrent.atomic.AtomicLong
 
-import akka.actor.{ ActorRef, ActorSystem }
+import akka.actor.{ActorRef, ActorSystem}
 import akka.event.Logging
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
-import akka.http.scaladsl.server.directives.MethodDirectives.{ delete, get }
+import akka.http.scaladsl.server.directives.MethodDirectives.{delete, get}
 import akka.http.scaladsl.server.directives.PathDirectives.path
 import akka.http.scaladsl.server.directives.RouteDirectives.complete
 import akka.pattern.ask
 import akka.util.Timeout
-import com.cesarla.KeyRegistryActor.{ SetKeyValue, _ }
+import com.cesarla.KeyRegistryActor.{SetKeyValue, _}
 import com.cesarla.models._
 import de.heikoseeberger.akkahttpplayjson.PlayJsonSupport
 
@@ -51,8 +51,9 @@ trait KeyValueRoutes extends PlayJsonSupport {
           put {
             parameters('value.as[String].?, 'ttl.as[Long].?) {
               case (Some(value), ttl) =>
-                val operation: Future[Operation] = (
-                  keyRegistryActor ? SetKeyValue(id, Key(key), Value(value, ttl.map(Instant.ofEpochSecond)))).mapTo[Operation]
+                val operation: Future[Operation] =
+                  (keyRegistryActor ? SetKeyValue(id, Key(key), Value(value, ttl.map(Instant.ofEpochSecond))))
+                    .mapTo[Operation]
                 onSuccess(operation) {
                   case op: OperationPerformed => complete((StatusCodes.Created, op))
                   case op: OperationFailed =>
@@ -60,7 +61,8 @@ trait KeyValueRoutes extends PlayJsonSupport {
                     complete((op.status, op))
                 }
               case (None, _) =>
-                val op = OperationFailed("set", Key(key), "Missing required parameter \"value\"", StatusCodes.BadRequest)
+                val op =
+                  OperationFailed("set", Key(key), "Missing required parameter \"value\"", StatusCodes.BadRequest)
                 complete((op.status, op))
             }
           },
@@ -75,7 +77,8 @@ trait KeyValueRoutes extends PlayJsonSupport {
                 log.info("{} - Key {} failed to be deleted: {}", id, key, op)
                 complete((op.status, op))
             }
-          })
+          }
+        )
       }
     }
 }

@@ -9,7 +9,7 @@ import com.cesarla.KeyRegistryActor.SetKeyValue
 import com.cesarla.models._
 import de.heikoseeberger.akkahttpplayjson.PlayJsonSupport
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.{Matchers, WordSpec}
+import org.scalatest.{ Matchers, WordSpec }
 
 class KeyValueRoutesSpec extends WordSpec with Matchers with ScalaFutures with ScalatestRouteTest
   with KeyValueRoutes with PlayJsonSupport {

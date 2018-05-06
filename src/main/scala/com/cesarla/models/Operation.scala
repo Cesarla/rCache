@@ -5,18 +5,21 @@ import com.cesarla.utils.JsonFormatting
 import play.api.libs.json._
 
 sealed abstract class Operation(action: String) {
-  def isSuccess: Boolean = this match {
+  def isSuccessful: Boolean = this match {
     case _: OperationPerformed => true
-    case _ => false
+    case _                     => false
   }
 
   def isFailed: Boolean = this match {
     case _: OperationFailed => true
-    case _ => false
+    case _                  => false
   }
 }
 
-final case class OperationPerformed(action: String, keyValue: Option[KeyValue] = None, oldKeyValue: Option[KeyValue] = None) extends Operation(action)
+final case class OperationPerformed(action: String,
+                                    keyValue: Option[KeyValue] = None,
+                                    oldKeyValue: Option[KeyValue] = None)
+    extends Operation(action)
 
 object OperationPerformed extends JsonFormatting {
   implicit val jsonFormats: OFormat[OperationPerformed] = Json.format[OperationPerformed]

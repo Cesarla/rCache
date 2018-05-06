@@ -1,7 +1,7 @@
 package com.cesarla
 
-import akka.actor.{ Actor, ActorLogging, Props }
-import akka.http.scaladsl.model.{ StatusCode, StatusCodes }
+import akka.actor.{Actor, ActorLogging, Props}
+import akka.http.scaladsl.model.{StatusCode, StatusCodes}
 import com.cesarla.models._
 
 object KeyRegistryActor {

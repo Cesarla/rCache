@@ -4,7 +4,7 @@ import akka.http.scaladsl.model.StatusCode
 import com.cesarla.utils.JsonFormatting
 import play.api.libs.json._
 
-sealed abstract class Operation(action: String) {
+sealed trait Operation {
   def isSuccessful: Boolean = this match {
     case _: OperationPerformed => true
     case _                     => false
@@ -19,16 +19,17 @@ sealed abstract class Operation(action: String) {
 final case class OperationPerformed(action: String,
                                     keyValue: Option[KeyValue] = None,
                                     oldKeyValue: Option[KeyValue] = None)
-    extends Operation(action)
+    extends Operation
 
 object OperationPerformed extends JsonFormatting {
   implicit val jsonFormats: OFormat[OperationPerformed] = Json.format[OperationPerformed]
 }
 
-final case class OperationFailed(action: String, key: Key, reason: String, status: StatusCode) extends Operation(action)
+final case class OperationFailed(action: String, key: Key, reason: String, status: StatusCode) extends Operation
 
 object OperationFailed extends JsonFormatting {
-  private implicit val opIdReads: Reads[StatusCode] = JsPath.read[Int].map(StatusCode.int2StatusCode)
-  private implicit val opIdWrites: Writes[StatusCode] = Writes[StatusCode](sc => JsNumber(sc.intValue()))
+  private val statusCodeReads: Reads[StatusCode] = JsPath.read[Int].map(StatusCode.int2StatusCode)
+  private val statusCodeWrites: Writes[StatusCode] = Writes[StatusCode](sc => JsNumber(sc.intValue()))
+  implicit val statusCodeFormat = Format(statusCodeReads, statusCodeWrites)
   implicit val jsonFormats: OFormat[OperationFailed] = Json.format[OperationFailed]
 }

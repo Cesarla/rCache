@@ -13,7 +13,7 @@ import akka.http.scaladsl.server.directives.PathDirectives.path
 import akka.http.scaladsl.server.directives.RouteDirectives.complete
 import akka.pattern.ask
 import akka.util.Timeout
-import com.cesarla.KeyRegistryActor.{SetKeyValue, _}
+import com.cesarla.KeyRegistryActor._
 import com.cesarla.models._
 import de.heikoseeberger.akkahttpplayjson.PlayJsonSupport
 

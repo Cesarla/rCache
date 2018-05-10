@@ -8,7 +8,6 @@ final case class OpId(value: String) extends AnyVal {
 }
 
 object OpId extends JsonFormatting {
-  private val opIdReads: Reads[OpId] = JsPath.read[String].map(OpId.apply)
-  private val opIdWrites: Writes[OpId] = Writes[OpId](l => JsString(l.value))
-  implicit val jsonFormats: Format[OpId] = Format(opIdReads, opIdWrites)
+  implicit val jsonFormats: Format[OpId] =
+    Format(JsPath.read[String].map(OpId.apply), Writes[OpId](opId => JsString(opId.value)))
 }

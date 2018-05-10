@@ -10,12 +10,14 @@ trait Fixtures {
 
   lazy val opIdFixture = OpId("op1")
 
-  lazy val keyFixture = Key("key")
-  lazy val valueFixture = Value("value")
-  lazy val valueWithTtlFixture = valueFixture.copy(ttl = Some(instantFixture))
-  lazy val keyValueFixture = KeyValue(keyFixture, valueFixture)
-  lazy val keyValueWithTtlFixture = KeyValue(keyFixture, valueWithTtlFixture)
+  lazy val byteArrayFixture: Array[Byte] = Array(-84, -19, 0, 5, 116, 0, 5, 118, 97, 108, 117, 101)
 
-  lazy val operationFailedFixture = OperationFailed("get", keyFixture, s"""key "$keyFixture" not present""", StatusCodes.NotFound)
-  lazy val operationPerformedFixture = OperationPerformed("get", Some(keyValueFixture))
+  def keyFixture[A]: Key[A] = Key[A]("key")
+  def columnFixture[A](value:A): Column[A] = Column[A](keyFixture, value, instantFixture)
+  def columnFixtureWithTtl[A](value:A): Column[A] = columnFixture(value).copy(ttl=Some(instantFixture))
+
+  def operationFailedFixture[A]: OperationFailed[A] = OperationFailed[A]("get", keyFixture[A], s"""key "$keyFixture" not present""", StatusCodes.NotFound)
+  def getOperationPerformedFixture[A](value:A): OperationPerformed[A] = OperationPerformed[A]("get", Some(columnFixture(value)))
+  def setOperationPerformedFixture[A](value:A): OperationPerformed[A] = OperationPerformed[A]("set", Some(columnFixture(value)))
+  def deleteOperationPerformedFixture[A]: OperationPerformed[A] = OperationPerformed[A]("delete", None)
 }

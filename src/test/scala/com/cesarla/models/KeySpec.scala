@@ -7,12 +7,14 @@ import play.api.libs.json.{JsString, Json}
 
 class KeySpec extends WordSpec with Matchers with PlayJsonSupport with Fixtures {
   "Key" should {
-    "serialize" in {
-      Json.toJson(keyFixture) should === (JsString("key"))
+    "serialize to JSON" in {
+      Json.toJson(keyFixture[Int]) should === (JsString("key"))
+      Json.toJson(keyFixture[Boolean]) should === (JsString("key"))
     }
 
-    "deserialize" in {
-      JsString("key").as[Key] should === (keyFixture)
+    "deserialize from JSON" in {
+      JsString("key").as[Key[Int]] should === (keyFixture[Int])
+      JsString("key").as[Key[Boolean]] should === (keyFixture[Boolean])
     }
   }
 }

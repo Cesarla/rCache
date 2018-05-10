@@ -1,14 +1,17 @@
 package com.cesarla.models
 
+import com.cesarla.persistence.{ByteArraySerialization, Encoder}
 import com.cesarla.utils.JsonFormatting
 import play.api.libs.json._
 
-final case class Key(value: String) extends AnyVal {
+final case class Key[A](value: String) extends AnyVal {
   override def toString: String = value
 }
 
-object Key extends JsonFormatting {
-  val keyReads: Reads[Key] = JsPath.read[String].map(Key.apply)
-  val keyWrites: Writes[Key] = Writes[Key](l => JsString(l.value))
-  implicit val jsonFormats: Format[Key] = Format(keyReads, keyWrites)
+object Key extends JsonFormatting with ByteArraySerialization {
+  type KeyFormat[A] = Format[Key[A]]
+
+  implicit def keyEncoder[A]: Encoder[Key[A]] = Encoder[Key[A]](this.serialize)
+  implicit def jsonFormats[A: Format]: Format[Key[A]] =
+    Format(JsPath.read[String].map(Key.apply), Writes[Key[A]](l => JsString(l.value)))
 }

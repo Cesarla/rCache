@@ -2,13 +2,13 @@ package com.cesarla.persistence
 
 import org.scalatest.{Matchers, WordSpec}
 
-class CodecSpec extends WordSpec with Matchers  {
+class CodecSpec extends WordSpec with Matchers {
   val dummyEncodeFunction = (_: Int) => new Array[Byte](0)
   val dummyDecodeFunction = (_: Array[Byte]) => Some(123)
-  "Encoder" should {
+  "A Encoder" can {
     "encode" in {
       val codec = Codec(dummyEncodeFunction, dummyDecodeFunction)
-      codec.encode(123) should ===( new Array[Byte](0))
+      codec.encode(123) should ===(new Array[Byte](0))
     }
 
     "decode" in {
@@ -22,7 +22,7 @@ class CodecSpec extends WordSpec with Matchers  {
 
       def getImplicit(implicit codec: Codec[Int]): Codec[Int] = codec
 
-      getImplicit.encode(123) should ===( new Array[Byte](0))
+      getImplicit.encode(123) should ===(new Array[Byte](0))
       getImplicit.decode(new Array[Byte](0)) should ===(Some(123))
     }
   }

@@ -1,19 +1,24 @@
 package com.cesarla
 
-import scala.concurrent.Await
-import scala.concurrent.duration.Duration
-import akka.actor.{ActorRef, ActorSystem}
+import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Route
 import akka.stream.ActorMaterializer
 import com.cesarla.http.KeyValueRoutes
+import com.cesarla.persistence.{KeyRegistry, RocksDBEngine}
+
+import scala.concurrent.Await
+import scala.concurrent.duration.Duration
 
 object RCacheServer extends App with KeyValueRoutes {
 
   implicit val system: ActorSystem = ActorSystem("rCacheActorSystem")
   implicit val materializer: ActorMaterializer = ActorMaterializer()
 
-  val keyRegistryActor: ActorRef = system.actorOf(KeyRegistryActor.props, "keyRegistryActor")
+  override val KeyRegistry: KeyRegistry = {
+    val rocksDBRunner = RocksDBEngine.load("/tmp/rcache")
+    new KeyRegistry(rocksDBRunner)
+  }
 
   lazy val routes: Route = keyValueRoutes
 

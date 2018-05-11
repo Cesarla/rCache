@@ -12,9 +12,9 @@ import scala.concurrent.{ExecutionContext, Future}
 class RocksDBEngine(rocksDB: RocksDB) extends KeyValueEngine {
 
   /**
-    * RocksDB doesn't expose the MergeOperator in the Java API, so until then,
-    * rCache uses locks at key level to perform a Read-Modify-Write in an
-    * atomic fashion.
+    * RocksDB is not yet exposing the MergeOperator through the Java API,
+    * so in the meantime, rCache uses locks at key level to perform a
+    * Read-Modify-Write in an atomic fashion.
     */
   private[this] val lazyWeakLock: Striped[Lock] = Striped.lazyWeakLock(256)
 
@@ -23,7 +23,7 @@ class RocksDBEngine(rocksDB: RocksDB) extends KeyValueEngine {
                                                        ec: ExecutionContext): Future[Option[Column[A]]] = Future {
     val encodedKey = keyEncoder.encode(key)
     getAndDecode(encodedKey) match {
-      case Some(Column(_, _, _, Some(ttl))) if timestamp.getNano >= ttl.getNano =>
+      case Some(Column(_, _, _, Some(ttl))) if timestamp.getEpochSecond >= ttl.getEpochSecond =>
         rocksDB.delete(encodedKey)
         None
       case e: Option[Column[A]] => e
@@ -35,7 +35,7 @@ class RocksDBEngine(rocksDB: RocksDB) extends KeyValueEngine {
                                                       ec: ExecutionContext): Future[Unit] = Future {
     val encodedKey = keyEncoder.encode(key)
     lockByKey(key) {
-      filterColumnOrExecute(encodedKey)(_ > column.timestamp.getNano) {
+      if (isColumnNonExistingOrInThePast(encodedKey)(column.timestamp)) {
         val encodedColumn = valueFormat.encode(column)
         rocksDB.put(encodedKey, encodedColumn)
       }
@@ -47,20 +47,16 @@ class RocksDBEngine(rocksDB: RocksDB) extends KeyValueEngine {
                                                           ec: ExecutionContext): Future[Unit] = Future {
     val encodedKey = keyEncoder.encode(key)
     lockByKey(key) {
-      filterColumnOrExecute(encodedKey)(_ > timestamp.getNano) {
+      if (isColumnNonExistingOrInThePast(encodedKey)(timestamp)) {
         rocksDB.delete(encodedKey)
       }
     }
   }
 
-  private[this] def filterColumnOrExecute[A](encodedKey: Array[Byte])(f: Int => Boolean)(block: => Unit)(
-      implicit valueDecoder: ColumnDecoder[A]): Unit = {
-    getAndDecode(encodedKey)
-      .filter(c => f(c.timestamp.getNano))
-      .map(_ => ())
-      .getOrElse {
-        block
-      }
+  private[this] def isColumnNonExistingOrInThePast[A](encodedKey: Array[Byte])(timestamp: Instant)(
+      implicit valueDecoder: ColumnDecoder[A]): Boolean = {
+    val column = getAndDecode(encodedKey)
+    column.isEmpty || column.exists(_.timestamp.getEpochSecond < timestamp.getEpochSecond)
   }
 
   private[this] def getAndDecode[A](encodedKey: Array[Byte])(

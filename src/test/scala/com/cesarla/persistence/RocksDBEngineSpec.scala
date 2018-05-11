@@ -89,7 +89,7 @@ class RocksDBEngineSpec extends WordSpec with Matchers with MockFactory with Fix
           (mockRocksDB.delete(_: Array[Byte])).expects(*).returning(()).once()
           implicit val dummyDecodeFunction: Decoder[Column[String]] =
             Decoder[Column[String]]((_: Array[Byte]) => Some(columnFixture("value")))
-          Await.result(rocksDBEngine.delete[String](keyFixture, instantFixture), 2.seconds) should ===(())
+          Await.result(rocksDBEngine.delete[String](keyFixture, Instant.now()), 2.seconds) should ===(())
         }
       }
 

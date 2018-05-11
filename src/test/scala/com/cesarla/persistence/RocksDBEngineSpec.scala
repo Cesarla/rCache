@@ -18,6 +18,7 @@ class RocksDBEngineSpec extends WordSpec with Matchers with MockFactory with Fix
     "get a column" should {
       "get an existing key" in new Scope {
         (mockRocksDB.get(_: Array[Byte])).expects(*).returning(byteArrayFixture).once()
+        (mockRocksDB.delete(_: Array[Byte])).expects(*).returning(()).never()
 
         implicit val dummyDecodeFunction: Decoder[Column[String]] =
           Decoder[Column[String]]((_: Array[Byte]) => Some(columnFixture("value")))
@@ -26,8 +27,20 @@ class RocksDBEngineSpec extends WordSpec with Matchers with MockFactory with Fix
 
         result should ===(Some(columnFixture("value")))
       }
+      "delete expired value" in new Scope {
+        (mockRocksDB.get(_: Array[Byte])).expects(*).returning(byteArrayFixture).once()
+        (mockRocksDB.delete(_: Array[Byte])).expects(*).returning(()).once()
+
+        implicit val dummyDecodeFunction: Decoder[Column[String]] =
+          Decoder[Column[String]]((_: Array[Byte]) => Some(columnFixtureWithTtl("value")))
+        val result: Option[Column[String]] =
+          Await.result(rocksDBEngine.get[String](keyFixture, Instant.now()), 2.seconds)
+
+        result should ===(None)
+      }
       "handle key not found" in new Scope {
         (mockRocksDB.get(_: Array[Byte])).expects(*).returning(null).once()
+        (mockRocksDB.delete(_: Array[Byte])).expects(*).returning(()).never()
 
         val result: Option[Column[String]] =
           Await.result(rocksDBEngine.get[String](keyFixture, instantFixture), 2.seconds)
@@ -76,7 +89,7 @@ class RocksDBEngineSpec extends WordSpec with Matchers with MockFactory with Fix
           (mockRocksDB.delete(_: Array[Byte])).expects(*).returning(()).once()
           implicit val dummyDecodeFunction: Decoder[Column[String]] =
             Decoder[Column[String]]((_: Array[Byte]) => Some(columnFixture("value")))
-          Await.result(rocksDBEngine.delete[String](keyFixture, instantFixture), 2.seconds) should ===(())
+          Await.result(rocksDBEngine.delete[String](keyFixture, Instant.now()), 2.seconds) should ===(())
         }
       }
 

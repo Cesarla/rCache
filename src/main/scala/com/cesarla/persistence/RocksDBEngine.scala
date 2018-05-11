@@ -22,7 +22,12 @@ class RocksDBEngine(rocksDB: RocksDB) extends KeyValueEngine {
                                                        valueDecoder: ColumnDecoder[A],
                                                        ec: ExecutionContext): Future[Option[Column[A]]] = Future {
     val encodedKey = keyEncoder.encode(key)
-    Option(rocksDB.get(encodedKey)).flatMap(r => valueDecoder.decode(r))
+    getAndDecode(encodedKey) match {
+      case Some(Column(_, _, _, Some(ttl))) if timestamp.getNano >= ttl.getNano =>
+        rocksDB.delete(encodedKey)
+        None
+      case e: Option[Column[A]] => e
+    }
   }
 
   override def put[A](key: Key[A], column: Column[A])(implicit keyEncoder: KeyEncoder[A],

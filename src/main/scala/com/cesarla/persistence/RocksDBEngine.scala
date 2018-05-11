@@ -30,11 +30,9 @@ class RocksDBEngine(rocksDB: RocksDB) extends KeyValueEngine {
                                                       ec: ExecutionContext): Future[Unit] = Future {
     val encodedKey = keyEncoder.encode(key)
     lockByKey(key) {
-      Option(rocksDB.get(encodedKey)).flatMap(r => valueFormat.decode(r)) match {
-        case Some(Column(_, _, prevTimestamp, _)) if prevTimestamp.getNano > column.timestamp.getNano => ()
-        case _ =>
-          val encodedColumn = valueFormat.encode(column)
-          rocksDB.put(encodedKey, encodedColumn)
+      filterColumnOrExecute(encodedKey)(_ > column.timestamp.getNano) {
+        val encodedColumn = valueFormat.encode(column)
+        rocksDB.put(encodedKey, encodedColumn)
       }
     }
   }
@@ -44,11 +42,25 @@ class RocksDBEngine(rocksDB: RocksDB) extends KeyValueEngine {
                                                           ec: ExecutionContext): Future[Unit] = Future {
     val encodedKey = keyEncoder.encode(key)
     lockByKey(key) {
-      Option(rocksDB.get(encodedKey)).flatMap(r => valueReader.decode(r)) match {
-        case Some(Column(_, _, prevTimestamp, _)) if prevTimestamp.getNano > timestamp.getNano => ()
-        case _                                                                                 => rocksDB.delete(encodedKey)
+      filterColumnOrExecute(encodedKey)(_ > timestamp.getNano) {
+        rocksDB.delete(encodedKey)
       }
     }
+  }
+
+  private[this] def filterColumnOrExecute[A](encodedKey: Array[Byte])(f: Int => Boolean)(block: => Unit)(
+      implicit valueDecoder: ColumnDecoder[A]): Unit = {
+    getAndDecode(encodedKey)
+      .filter(c => f(c.timestamp.getNano))
+      .map(_ => ())
+      .getOrElse {
+        block
+      }
+  }
+
+  private[this] def getAndDecode[A](encodedKey: Array[Byte])(
+      implicit valueDecoder: ColumnDecoder[A]): Option[Column[A]] = {
+    Option(rocksDB.get(encodedKey)).flatMap(r => valueDecoder.decode(r))
   }
 
   private[this] def lockByKey[A, B](key: Key[A])(block: => B): B = {

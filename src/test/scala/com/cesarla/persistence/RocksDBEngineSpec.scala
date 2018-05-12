@@ -2,7 +2,6 @@ package com.cesarla.persistence
 
 import java.time.Instant
 
-import akka.actor.ActorSystem
 import com.cesarla.data.Fixtures
 import com.cesarla.models.Column
 import org.rocksdb.RocksDB
@@ -104,7 +103,6 @@ class RocksDBEngineSpec extends WordSpec with Matchers with MockFactory with Fix
   }
 
   trait Scope {
-    implicit val system: ActorSystem = mock[ActorSystem]
     val mockRocksDB: RocksDB = mock[RocksDB]
     val rocksDBEngine: RocksDBEngine = new RocksDBEngine(mockRocksDB)
   }

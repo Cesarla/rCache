@@ -1,3 +1,9 @@
 *.class
+.#*
+.*.swp
+.history
 .idea
+.idea/*
+.idea_modules
+.lib
 target/

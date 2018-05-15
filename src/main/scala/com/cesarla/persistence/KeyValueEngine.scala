@@ -2,9 +2,9 @@ package com.cesarla.persistence
 
 import java.time.Instant
 
-import com.cesarla.models.{Column, Key}
+import com.cesarla.models.{Column, Key, Operation}
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
 
 trait KeyValueEngine {
 
@@ -18,13 +18,13 @@ trait KeyValueEngine {
 
   def get[A](key: Key[A], timestamp: Instant)(implicit keyEncoder: KeyEncoder[A],
                                               valueDecoder: ColumnDecoder[A],
-                                              ec: ExecutionContext): Future[Option[Column[A]]]
+                                              ec: ExecutionContext): Operation[Column[A]]
 
   def put[A](key: Key[A], column: Column[A])(implicit keyEncoder: KeyEncoder[A],
                                              valueFormat: ColumnCodec[A],
-                                             ec: ExecutionContext): Future[Unit]
+                                             ec: ExecutionContext): Operation[Unit]
 
   def delete[A](key: Key[A], timestamp: Instant)(implicit keyEncoder: KeyEncoder[A],
                                                  valueReader: ColumnCodec[A],
-                                                 ec: ExecutionContext): Future[Unit]
+                                                 ec: ExecutionContext): Operation[Unit]
 }

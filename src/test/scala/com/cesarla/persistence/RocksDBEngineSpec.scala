@@ -3,14 +3,14 @@ package com.cesarla.persistence
 import java.time.Instant
 
 import com.cesarla.data.Fixtures
-import com.cesarla.models.{Column, KeyNotFound}
 import com.cesarla.models.OperationsOps._
+import com.cesarla.models.{Column, KeyNotFound}
 import org.rocksdb.RocksDB
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.{Matchers, WordSpec}
 
-import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration._
 
 class RocksDBEngineSpec extends WordSpec with Matchers with MockFactory with Fixtures {
   "A RocksDBEngine" can {

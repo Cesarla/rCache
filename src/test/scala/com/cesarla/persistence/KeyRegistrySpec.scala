@@ -2,13 +2,13 @@ package com.cesarla.persistence
 
 import java.time.Instant
 
-import akka.http.scaladsl.model.StatusCodes
 import com.cesarla.data.Fixtures
-import com.cesarla.models.{Column, Key, OperationFailed, OperationPerformed}
+import com.cesarla.models.OperationsOps._
+import com.cesarla.models._
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.{Matchers, WordSpec}
 
-import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 
@@ -27,11 +27,11 @@ class KeyRegistrySpec extends WordSpec with Matchers with MockFactory with Fixtu
             *,
             *
           )
-          .returning(Future.successful(Some(columnFixture("test"))))
+          .returning(columnFixture("test").asSuccess)
           .once()
 
-        Await.result(keyRegistry.getColumn(keyFixture, instantFixture), 2.seconds) should ===(
-          getOperationPerformedFixture("test"))
+        val Right(success) = keyRegistry.getColumn(keyFixture[String], instantFixture).await(2.seconds)
+        success should ===(columnFixture[String]("test"))
       }
       "return an OperationFailed if missing" in new Scope {
         (mockKvEngine
@@ -45,11 +45,11 @@ class KeyRegistrySpec extends WordSpec with Matchers with MockFactory with Fixtu
             *,
             *
           )
-          .returning(Future.successful(None))
+          .returning(KeyNotFound("key /key not present").asFailure)
           .once()
 
-        Await.result(keyRegistry.getColumn(keyFixture, instantFixture), 2.seconds) should ===(
-          OperationFailed("get", keyFixture, "key /key not present", StatusCodes.NotFound))
+        val Left(problem) = keyRegistry.getColumn(keyFixture[String], instantFixture).await(2.seconds)
+        problem should ===(KeyNotFound("key /key not present"))
       }
     }
 
@@ -65,11 +65,11 @@ class KeyRegistrySpec extends WordSpec with Matchers with MockFactory with Fixtu
           *,
           *
         )
-        .returning(Future.successful(()))
+        .returning(().asSuccess)
         .once()
 
-      Await.result(keyRegistry.setColumn(keyFixture, columnFixture("test")), 2.seconds) should ===(
-        OperationPerformed("set"))
+      val Right(success) = keyRegistry.setColumn(keyFixture, columnFixture("test")).await(2.seconds)
+      success should ===(())
     }
 
     "delete a column" in new Scope {
@@ -84,11 +84,11 @@ class KeyRegistrySpec extends WordSpec with Matchers with MockFactory with Fixtu
           *,
           *
         )
-        .returning(Future.successful(()))
+        .returning(().asSuccess)
         .once()
 
-      Await.result(keyRegistry.deleteColumn(keyFixture, instantFixture), 2.seconds) should ===(
-        OperationPerformed("delete"))
+      val Right(success) = keyRegistry.deleteColumn(keyFixture, instantFixture).await(2.seconds)
+      success should ===(())
     }
   }
 

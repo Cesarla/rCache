@@ -28,14 +28,14 @@ class KeyValueRoutesSpec
 
   lazy val routes: Route = keyValueRoutes
 
-  override val KeyRegistry: KeyRegistry = mock[KeyRegistry]
+  override val keyRegistry: KeyRegistry = mock[KeyRegistry]
 
   "KeyValueRoutes" when {
     "GET a key" should {
       "be able to retrieve a present key-value" in {
         val operation: Operation[Column[String]] = successOperationFixture(columnFixture("foo"))
         val result: SuccessResult[String] = getSuccessResultFixture[String]("foo")
-        (KeyRegistry
+        (keyRegistry
           .getColumn[String](_: Key[String], _: Instant)(_: ExecutionContext))
           .expects(*, *, *)
           .returning(operation)
@@ -51,7 +51,7 @@ class KeyValueRoutesSpec
         val operation: Operation[Column[String]] = KeyNotFound("key /non-existing not present").asFailure
         val result: FailedResult[String] =
           FailedResult[String]("get", Key[String]("non-existing"), "key /non-existing not present")
-        (KeyRegistry
+        (keyRegistry
           .getColumn[String](_: Key[String], _: Instant)(_: ExecutionContext))
           .expects(*, *, *)
           .returning(operation)
@@ -67,7 +67,7 @@ class KeyValueRoutesSpec
         val operation: Operation[Column[String]] = StorageError("Some low level error").asFailure
         val result: FailedResult[String] =
           FailedResult[String]("get", Key[String]("foo"), "Some low level error")
-        (KeyRegistry
+        (keyRegistry
           .getColumn[String](_: Key[String], _: Instant)(_: ExecutionContext))
           .expects(*, *, *)
           .returning(operation)
@@ -84,7 +84,7 @@ class KeyValueRoutesSpec
       "be able to set key-value" in {
         val operation: Operation[Unit] = ().asSuccess
         val result: SuccessResult[String] = setSuccessResultFixture[String]
-        (KeyRegistry
+        (keyRegistry
           .setColumn[String](_: Key[String], _: Column[String])(_: ExecutionContext))
           .expects(*, *, *)
           .returning(operation)
@@ -111,7 +111,7 @@ class KeyValueRoutesSpec
         val operation: Operation[Unit] = StorageError("Some low level error").asFailure
         val result: FailedResult[String] =
           FailedResult("set", Key("key"), "Some low level error")
-        (KeyRegistry
+        (keyRegistry
           .setColumn[String](_: Key[String], _: Column[String])(_: ExecutionContext))
           .expects(*, *, *)
           .returning(operation)
@@ -128,7 +128,7 @@ class KeyValueRoutesSpec
       "be able to remove a present key-values" in {
         val operation: Operation[Unit] = ().asSuccess
         val result: SuccessResult[String] = deleteSuccessResultFixture[String]
-        (KeyRegistry
+        (keyRegistry
           .deleteColumn[String](_: Key[String], _: Instant)(_: ExecutionContext))
           .expects(*, *, *)
           .returning(operation)
@@ -144,7 +144,7 @@ class KeyValueRoutesSpec
         val operation: Operation[Unit] = StorageError("Some low level error").asFailure
         val result: FailedResult[String] =
           FailedResult("delete", Key("foo"), "Some low level error")
-        (KeyRegistry
+        (keyRegistry
           .deleteColumn[String](_: Key[String], _: Instant)(_: ExecutionContext))
           .expects(*, *, *)
           .returning(operation)

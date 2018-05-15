@@ -28,7 +28,7 @@ trait KeyValueRoutes extends PlayJsonSupport {
 
   val counter = new AtomicLong()
 
-  val KeyRegistry: KeyRegistry
+  val keyRegistry: KeyRegistry
 
   lazy val keyValueRoutes: Route =
     pathPrefix("v1" / "keys") {
@@ -37,7 +37,7 @@ trait KeyValueRoutes extends PlayJsonSupport {
       path(Segment) { key =>
         concat(
           get {
-            val operation: Operation[Column[String]] = KeyRegistry.getColumn(Key(key), Instant.now())
+            val operation: Operation[Column[String]] = keyRegistry.getColumn(Key(key), Instant.now())
             onSuccess(operation.value) {
               case Right(column) => complete((StatusCodes.OK, SuccessResult("get", Some(column))))
               case Left(problem: Problem) =>
@@ -50,7 +50,7 @@ trait KeyValueRoutes extends PlayJsonSupport {
             parameters(('value.as[String].?, 'ttl.as[Long].?)) {
               case (Some(value), ttl) =>
                 val operation: Operation[Unit] =
-                  KeyRegistry.setColumn(Key[String](key),
+                  keyRegistry.setColumn(Key[String](key),
                                         Column(Key[String](key), value, Instant.now(), ttl.map(Instant.ofEpochSecond)))
                 onSuccess(operation.value) {
                   case Right(_) => complete((StatusCodes.Created, SuccessResult[String]("set")))
@@ -66,7 +66,7 @@ trait KeyValueRoutes extends PlayJsonSupport {
             }
           },
           delete {
-            val operation: Operation[Unit] = KeyRegistry.deleteColumn(Key(key), Instant.now())
+            val operation: Operation[Unit] = keyRegistry.deleteColumn(Key(key), Instant.now())
             onSuccess(operation.value) {
               case Right(_) =>
                 complete((StatusCodes.OK, SuccessResult[String]("delete")))

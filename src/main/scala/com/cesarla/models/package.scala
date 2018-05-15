@@ -2,7 +2,7 @@ package com.cesarla
 
 import cats.data.EitherT
 import cats.implicits._
-import com.cesarla.models.Operation.toOperation
+import com.cesarla.models.Operation.fromFuture
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
@@ -12,7 +12,7 @@ package object models {
   type Operation[A] = EitherT[Future, Problem, A]
 
   object Operation {
-    implicit def toOperation[A](future: Future[Either[Problem, A]]): Operation[A] =
+    implicit def fromFuture[A](future: Future[Either[Problem, A]]): Operation[A] =
       EitherT[Future, Problem, A](future)
   }
 

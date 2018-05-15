@@ -16,20 +16,19 @@ import com.cesarla.persistence.KeyRegistry
 import de.heikoseeberger.akkahttpplayjson.PlayJsonSupport
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
 import scala.concurrent.duration._
 
 trait KeyValueRoutes extends PlayJsonSupport {
 
   implicit def system: ActorSystem
 
-  lazy val log = Logging(system, classOf[KeyValueRoutes])
-
-  def KeyRegistry: KeyRegistry
-
   implicit lazy val timeout: Timeout = Timeout(5.seconds)
 
+  lazy val log = Logging(system, classOf[KeyValueRoutes])
+
   val counter = new AtomicLong()
+
+  val keyRegistry: KeyRegistry
 
   lazy val keyValueRoutes: Route =
     pathPrefix("v1" / "keys") {
@@ -38,41 +37,43 @@ trait KeyValueRoutes extends PlayJsonSupport {
       path(Segment) { key =>
         concat(
           get {
-            val operation: Future[Operation[String]] = KeyRegistry.getColumn(Key(key), Instant.now())
-            onSuccess(operation) {
-              case op: OperationPerformed[String] => complete((StatusCodes.OK, op))
-              case op: OperationFailed[String] =>
-                log.info("{} - Key {} failed to be fetched: {}", id, key, op)
-                complete((op.status, op))
+            val operation: Operation[Column[String]] = keyRegistry.getColumn(Key(key), Instant.now())
+            onSuccess(operation.value) {
+              case Right(column) => complete((StatusCodes.OK, SuccessResult("get", Some(column))))
+              case Left(problem: Problem) =>
+                val result: FailedResult[String] = FailedResult("get", Key(key), problem.reason)
+                log.info("{} - Key {} failed to be fetched: {}", id, key, result)
+                complete((problem.status, result))
             }
           },
           put {
             parameters(('value.as[String].?, 'ttl.as[Long].?)) {
               case (Some(value), ttl) =>
-                val operation: Future[Operation[String]] =
-                  KeyRegistry.setColumn(Key(key),
-                                        Column(Key(key), value, Instant.now(), ttl.map(Instant.ofEpochSecond)))
-                onSuccess(operation) {
-                  case op: OperationPerformed[String] => complete((StatusCodes.Created, op))
-                  case op: OperationFailed[String] =>
-                    log.info("{} - Key {} failed to be set: {}", id, key, op)
-                    complete((op.status, op))
+                val operation: Operation[Unit] =
+                  keyRegistry.setColumn(Key[String](key),
+                                        Column(Key[String](key), value, Instant.now(), ttl.map(Instant.ofEpochSecond)))
+                onSuccess(operation.value) {
+                  case Right(_) => complete((StatusCodes.Created, SuccessResult[String]("set")))
+                  case Left(problem: Problem) =>
+                    val result = FailedResult("set", Key[String](key), problem.reason)
+                    log.info("{} - Key {} failed to be set: {}", id, key, result)
+                    complete((problem.status, result))
                 }
               case (None, _) =>
-                val op: OperationFailed[String] =
-                  OperationFailed("set", Key(key), "Missing required parameter \"value\"", StatusCodes.BadRequest)
-                complete((op.status, op))
+                val result: FailedResult[String] =
+                  FailedResult("set", Key(key), "Missing required parameter \"value\"")
+                complete((StatusCodes.BadRequest, result))
             }
           },
           delete {
-            val operation: Future[Operation[String]] = KeyRegistry.deleteColumn(Key(key), Instant.now())
-            onSuccess(operation) {
-              case op: OperationPerformed[String] =>
-                log.info("{} - Key {} deleted", id, key)
-                complete((StatusCodes.OK, op))
-              case op: OperationFailed[String] =>
-                log.info("{} - Key {} failed to be deleted: {}", id, key, op)
-                complete((op.status, op))
+            val operation: Operation[Unit] = keyRegistry.deleteColumn(Key(key), Instant.now())
+            onSuccess(operation.value) {
+              case Right(_) =>
+                complete((StatusCodes.OK, SuccessResult[String]("delete")))
+              case Left(problem: Problem) =>
+                val result = FailedResult("delete", Key[String](key), problem.reason)
+                log.info("{} - Key {} failed to be deleted: {}", id, key, result)
+                complete((problem.status, result))
             }
           }
         )

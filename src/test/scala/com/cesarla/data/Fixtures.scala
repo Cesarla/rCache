@@ -2,7 +2,7 @@ package com.cesarla.data
 
 import java.time.Instant
 
-import akka.http.scaladsl.model.StatusCodes
+import com.cesarla.models.OperationsOps._
 import com.cesarla.models._
 
 trait Fixtures {
@@ -12,12 +12,18 @@ trait Fixtures {
 
   lazy val byteArrayFixture: Array[Byte] = Array(-84, -19, 0, 5, 116, 0, 5, 118, 97, 108, 117, 101)
 
-  def keyFixture[A]: Key[A] = Key[A]("key")
-  def columnFixture[A](value:A): Column[A] = Column[A](keyFixture, value, instantFixture)
-  def columnFixtureWithTtl[A](value:A): Column[A] = columnFixture(value).copy(ttl=Some(instantFixture))
+  lazy val problemFixture = KeyNotFound("foo")
 
-  def operationFailedFixture[A]: OperationFailed[A] = OperationFailed[A]("get", keyFixture[A], s"""key "$keyFixture" not present""", StatusCodes.NotFound)
-  def getOperationPerformedFixture[A](value:A): OperationPerformed[A] = OperationPerformed[A]("get", Some(columnFixture(value)))
-  def setOperationPerformedFixture[A](value:A): OperationPerformed[A] = OperationPerformed[A]("set", Some(columnFixture(value)))
-  def deleteOperationPerformedFixture[A]: OperationPerformed[A] = OperationPerformed[A]("delete", None)
+  def keyFixture[A]: Key[A] = Key[A]("key")
+  def columnFixture[A](value: A): Column[A] = Column[A](keyFixture, value, instantFixture)
+  def columnFixtureWithTtl[A](value: A): Column[A] = columnFixture(value).copy(ttl = Some(instantFixture))
+
+  def successOperationFixture[A](value: A): Operation[A] = value.asSuccess
+  def failureOperationFixture[A]: Operation[A] = problemFixture.asFailure
+
+  def failedResultFixture[A]: FailedResult[A] =
+    FailedResult[A]("get", keyFixture[A], s"""key "$keyFixture" not present""")
+  def getSuccessResultFixture[A](value: A): SuccessResult[A] = SuccessResult[A]("get", Some(columnFixture(value)))
+  def setSuccessResultFixture[A]: SuccessResult[A] = SuccessResult[A]("set", None)
+  def deleteSuccessResultFixture[A]: SuccessResult[A] = SuccessResult[A]("delete", None)
 }

@@ -15,7 +15,7 @@ object RCacheServer extends App with KeyValueRoutes {
   implicit val system: ActorSystem = ActorSystem("rCacheActorSystem")
   implicit val materializer: ActorMaterializer = ActorMaterializer()
 
-  override val KeyRegistry: KeyRegistry = {
+  override val keyRegistry: KeyRegistry = {
     val rocksDBRunner = RocksDBEngine.load("/tmp/rcache")
     new KeyRegistry(rocksDBRunner)
   }

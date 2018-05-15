@@ -1,5 +1,6 @@
 lazy val akkaHttpVersion = "10.1.1"
 lazy val akkaVersion = "2.5.12"
+lazy val catsVersion = "1.1.0"
 lazy val playWsV = "1.1.8"
 lazy val rocksDBVersion = "5.11.3"
 
@@ -19,6 +20,7 @@ lazy val root = (project in file(".")).settings(
     "de.heikoseeberger" %% "akka-http-play-json" % "1.20.0" excludeAll ExclusionRule(
       organization = "com.typesafe.play"),
     "org.rocksdb" % "rocksdbjni" % rocksDBVersion,
+    "org.typelevel" %% "cats-core" % catsVersion,
     "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpVersion % Test,
     "com.typesafe.akka" %% "akka-testkit" % akkaVersion % Test,
     "com.typesafe.akka" %% "akka-stream-testkit" % akkaVersion % Test,

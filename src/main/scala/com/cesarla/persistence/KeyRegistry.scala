@@ -2,26 +2,20 @@ package com.cesarla.persistence
 
 import java.time.Instant
 
-import akka.http.scaladsl.model.StatusCodes
 import com.cesarla.models._
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
 
 class KeyRegistry(kvEngine: KeyValueEngine) {
-  def getColumn[A](key: Key[A], timestamp: Instant)(implicit ec: ExecutionContext): Future[Operation[A]] = {
-    kvEngine
-      .get(key, timestamp)
-      .map(
-        column =>
-          if (column.isEmpty) OperationFailed("get", key, s"key /$key not present", StatusCodes.NotFound)
-          else OperationPerformed("get", column))
+  def getColumn[A](key: Key[A], timestamp: Instant)(implicit ec: ExecutionContext): Operation[Column[A]] = {
+    kvEngine.get(key, timestamp)
   }
 
-  def setColumn[A](key: Key[A], column: Column[A])(implicit ec: ExecutionContext): Future[Operation[A]] = {
-    kvEngine.put(key, column).map(_ => OperationPerformed("set"))
+  def setColumn[A](key: Key[A], column: Column[A])(implicit ec: ExecutionContext): Operation[Unit] = {
+    kvEngine.put(key, column)
   }
 
-  def deleteColumn[A](key: Key[A], timestamp: Instant)(implicit ec: ExecutionContext): Future[Operation[A]] = {
-    kvEngine.delete(key, timestamp).map(_ => OperationPerformed("delete"))
+  def deleteColumn[A](key: Key[A], timestamp: Instant)(implicit ec: ExecutionContext): Operation[Unit] = {
+    kvEngine.delete(key, timestamp)
   }
 }

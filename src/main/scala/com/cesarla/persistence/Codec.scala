@@ -10,6 +10,6 @@ object Codec {
       override def decode(value: Array[Byte]): Option[A] = fDecode(value)
     }
 
-  implicit def toCodec[A](implicit encoder: Encoder[A], decoder: Decoder[A]): Codec[A] =
+  implicit def buildFrom[A](implicit encoder: Encoder[A], decoder: Decoder[A]): Codec[A] =
     apply(encoder.encode, decoder.decode)
 }

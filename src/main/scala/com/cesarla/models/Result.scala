@@ -5,7 +5,7 @@ import com.cesarla.models.Key.KeyFormat
 import com.cesarla.utils.JsonFormatting
 import play.api.libs.json._
 
-trait Result[A]
+sealed trait Result[A]
 
 final case class SuccessResult[A](action: String, column: Option[Column[A]] = None) extends Result[A]
 

@@ -14,7 +14,7 @@ import scala.concurrent.duration.Duration
 
 object RCacheServer extends App {
 
-  val nodes: Seq[Node] = Seq(8080, 8082, 8084).map(port => new Node(port))
+  val nodes: Seq[Node] = Seq(8080, 8082, 8084, 8086, 8088).map(port => new Node(port))
 
   nodes.map(node => Await.result(node.system.whenTerminated, Duration.Inf))
 }
@@ -32,7 +32,7 @@ class Node(httpPort: Int) extends KeyValueRoutes {
     new KeyRegistry(rocksDBRunner)
   }
 
-  system.actorOf(MembershipListener.props(httpPort.toString), name = "memberhipListener")
+  val actor = system.actorOf(MembershipListener.props((httpPort + 1).toString), name = "memberhipListener")
 
   lazy val routes: Route = keyValueRoutes
 

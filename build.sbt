@@ -13,8 +13,8 @@ lazy val root = (project in file(".")).settings(
   name := "rcache",
   libraryDependencies ++= Seq(
     "com.google.guava" % "guava" % "25.0-jre",
+    "com.typesafe.akka" %% "akka-cluster"  % akkaVersion,
     "com.typesafe.akka" %% "akka-http" % akkaHttpVersion,
-    "com.typesafe.akka" %% "akka-http-xml" % akkaHttpVersion,
     "com.typesafe.akka" %% "akka-stream" % akkaVersion,
     "com.typesafe.play" %% "play-ws-standalone-json" % playWsV,
     "de.heikoseeberger" %% "akka-http-play-json" % "1.20.0" excludeAll ExclusionRule(
